@@ -2,6 +2,10 @@ package timetac;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CsvTransformation {
     private final File file;
@@ -23,14 +27,26 @@ public class CsvTransformation {
     private void run() throws IOException {
         BufferedReader in = createReader();
         ParsedLine.ignoreNonMatchingLine(in.readLine());
-        double sum = in.lines()
-                .map(line -> {
-                    ParsedLine data = new ParsedLine(line);
-                    System.out.println(data.duration);
-                    return data.duration;
-                })
+        List<ParsedLine> lines = in.lines()
+                .map(ParsedLine::new)
+                .collect(Collectors.toList());
+
+        lines.forEach(line -> System.out.println(line.date + " - " + line.duration));
+
+        double sum = lines
+                .stream()
+                .map(line -> line.duration)
                 .reduce(0.0, (lhs, rhs) -> lhs + rhs);
         System.out.println("Sum: " + sum);
+
+        LocalDate lastDate = null;
+        for (ParsedLine line : lines) {
+            if (!line.date.equals(lastDate)) {
+                System.out.println(";;");
+            }
+            System.out.println(line.date + ";" + line.startTime.toLocalTime() + ";" + line.endTime.toLocalTime());
+            lastDate = line.date;
+        }
     }
 
     private BufferedReader createReader() throws FileNotFoundException {
